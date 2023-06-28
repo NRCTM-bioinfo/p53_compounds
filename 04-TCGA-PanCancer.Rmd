@@ -1,0 +1,427 @@
+# TCGA PanCanAtlas 
+
+## Powerfulness in regulating
+
+Heatmap of fold changes of expression of the p53 signature genes between p53-wild-type and p53-mutant tumors in the TCGA Pan-Cancer Atlas.
+
+### 116 p53 targets
+
+Related to Fig. 3a.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+
+TCGA.ALL <- c("TCGA-OV","TCGA-UCS","TCGA-LUSC","TCGA-ESCA","TCGA-READ","TCGA-HNSC","TCGA-PAAD","TCGA-COAD","TCGA-LUAD","TCGA-BLCA","TCGA-STAD","TCGA-LGG","TCGA-UCEC","TCGA-SARC","TCGA-BRCA","TCGA-GBM","TCGA-LIHC","TCGA-KICH","TCGA-ACC","TCGA-MESO","TCGA-DLBC","TCGA-PRAD","TCGA-CHOL","TCGA-SKCM","TCGA-CESC","TCGA-LAML","TCGA-THYM","TCGA-KIRC","TCGA-KIRP","TCGA-TGCT","TCGA-THCA","TCGA-PCPG","TCGA-UVM")
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 4, startRow = 2)
+
+gene.list <- unique(plot.data$Gene)
+
+plot.mat <- matrix(NA, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  if (nrow(sub) > 0) {
+    plot.mat[, i] <- 0
+    sub.1 <- sub[which(sub$GeneType == "FC > 1 (Others)"), ]
+    plot.mat[sub.1$Gene, i] <- 1
+    sub.2 <- sub[which(sub$GeneType == "FC > 1 (FC > 1.5 & P.adj < 0.05)"), ]
+    plot.mat[sub.2$Gene, i] <- 2
+  }
+}
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat == 2),
+                          NotSigCount = colSums(plot.mat == 1) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$NotSigCount, decreasing = T), ]
+
+plot.mat <- plot.mat[, stat.cohort$Cohort]
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#fffef3","#edd1ff","#984ac9"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              clustering_method = "ward.D2",
+              display_numbers = FALSE,
+              number_format = "%.f", number_color = "black",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 10,
+              fontsize_row = 1)
+p
+
+
+```
+
+### WT-up genes
+
+Related to Fig. 3a.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 5, startRow = 2)
+
+gene.list <- unique(plot.data$Gene)
+
+plot.mat <- matrix(NA, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  if (nrow(sub) > 0) {
+    plot.mat[, i] <- 0
+    sub.1 <- sub[which(sub$GeneType == "FC > 1 (Others)"), ]
+    plot.mat[sub.1$Gene, i] <- 1
+    sub.2 <- sub[which(sub$GeneType == "FC > 1 (FC > 1.5 & P.adj < 0.05)"), ]
+    plot.mat[sub.2$Gene, i] <- 2
+  }
+}
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat == 2),
+                          NotSigCount = colSums(plot.mat == 1) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$NotSigCount, decreasing = T), ]
+
+plot.mat <- plot.mat[, stat.cohort$Cohort]
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#fffef3","#edd1ff","#984ac9"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              clustering_method = "ward.D2",
+              display_numbers = FALSE,
+              number_format = "%.f", number_color = "black",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 10,
+              fontsize_row = 1)
+p
+
+
+```
+
+### MUT-up genes
+
+Related to Fig. 3a.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 6, startRow = 2)
+
+gene.list <- unique(plot.data$Gene)
+
+plot.mat <- matrix(NA, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  if (nrow(sub) > 0) {
+    plot.mat[, i] <- 0
+    sub.1 <- sub[which(sub$GeneType == "FC > 1 (Others)"), ]
+    plot.mat[sub.1$Gene, i] <- 1
+    sub.2 <- sub[which(sub$GeneType == "FC > 1 (FC > 1.5 & P.adj < 0.05)"), ]
+    plot.mat[sub.2$Gene, i] <- 2
+  }
+}
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat == 2),
+                          NotSigCount = colSums(plot.mat == 1) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$NotSigCount, decreasing = T), ]
+
+plot.mat <- plot.mat[, stat.cohort$Cohort]
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#fffef3","#edd1ff","#984ac9"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              clustering_method = "ward.D2",
+              display_numbers = FALSE,
+              number_format = "%.f", number_color = "black",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 10,
+              fontsize_row = 1)
+p
+
+
+```
+
+
+## HR of high expression 
+
+HR of overexpression of p53 signature genes among TCGA cancer types.
+
+### 116 p53 targets
+
+Related to Fig. 3b.
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 7, startRow = 2)
+gene.list <- unique(plot.data$Gene)
+
+plot.data$HR_type <- 1
+plot.data$HR_type[which(plot.data$HR < 0.67 | plot.data$HR > 1.5)] <- 1.5
+
+plot.data$P_type <- "P ≥ 0.05"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR > 1)] <- "P < 0.05, HR > 1"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR < 1)] <- "P < 0.05, HR < 1"
+plot.data$P_type <- factor(as.character(plot.data$P_type), levels = c("P < 0.05, HR < 1","P ≥ 0.05","P < 0.05, HR > 1"))
+
+
+plot.data$Tag <- 0
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of unfavorable (HR > 1.5) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of favorable (HR < 0.67) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of favorable (HR < 0.67) genes")] <- -1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of unfavorable (HR > 1.5) genes")] <- -1
+
+
+
+plot.mat <- matrix(0, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  sub <- sub[which(sub$P.value < 0.05), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- log2(sub$HR)
+}
+stat.gene <- data.frame(Gene = rownames(plot.mat), 
+                        SigCount = rowSums(plot.mat < 0) - rowSums(plot.mat > 0),
+                        SigHR = rowMeans(plot.mat * -1) )
+stat.gene <- stat.gene[order(stat.gene$SigCount, stat.gene$SigHR, decreasing = T), ]
+
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat < 0) - colSums(plot.mat > 0),
+                          SigHR = colMeans(plot.mat * -1) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$SigHR, decreasing = T), ]
+
+plot.info <- plot.data
+plot.info$Cohort <- factor(as.character(plot.info$TCGA.Cohort), levels = stat.cohort$Cohort)
+plot.info$Gene <- factor(as.character(plot.info$Gene), levels = rev(stat.gene$Gene) )
+
+plot.info <- plot.info[order(plot.info$P_type, decreasing = T), ]
+p <- ggplot(plot.info, aes(Cohort, Gene)) +
+  geom_point(aes(size = HR_type, colour = P_type, fill = P_type), shape = 16, alpha = 0.7) + 
+  xlab("") + ylab("")
+p <- p + theme_base() + scale_size(range = c(1.5,3))
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 12))
+p <- p + theme(axis.text.y = element_text(size = 3))
+p <- p + scale_colour_manual(values = c(`P < 0.05, HR > 1` = "#D01910", `P < 0.05, HR < 1` = "#00599F", `P ≥ 0.05` = "#CCCCCC"))
+p
+```
+
+Related to Extended Data Fig. 3g.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+plot.mat <- matrix(0, nrow = length(stat.gene$Gene), ncol = length(stat.cohort$Cohort))
+rownames(plot.mat) <- stat.gene$Gene
+colnames(plot.mat) <- stat.cohort$Cohort
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- sub$Tag
+}
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#ff9393","#fffef3","#078aef"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              fontsize_col = 10,
+              fontsize_row = 2)
+p
+
+```
+
+### WT-up genes
+
+Related to Fig. 3b.
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 8, startRow = 2)
+gene.list <- unique(plot.data$Gene)
+
+plot.data$HR_type <- 1
+plot.data$HR_type[which(plot.data$HR < 0.67 | plot.data$HR > 1.5)] <- 1.5
+
+plot.data$P_type <- "P ≥ 0.05"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR > 1)] <- "P < 0.05, HR > 1"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR < 1)] <- "P < 0.05, HR < 1"
+plot.data$P_type <- factor(as.character(plot.data$P_type), levels = c("P < 0.05, HR < 1","P ≥ 0.05","P < 0.05, HR > 1"))
+
+
+plot.data$Tag <- 0
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of unfavorable (HR > 1.5) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of favorable (HR < 0.67) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of favorable (HR < 0.67) genes")] <- -1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of unfavorable (HR > 1.5) genes")] <- -1
+
+
+
+plot.mat <- matrix(0, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  sub <- sub[which(sub$P.value < 0.05), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- log2(sub$HR)
+}
+stat.gene <- data.frame(Gene = rownames(plot.mat), 
+                        SigCount = rowSums(plot.mat < 0) - rowSums(plot.mat > 0),
+                        SigHR = rowMeans(plot.mat * -1) )
+stat.gene <- stat.gene[order(stat.gene$SigCount, stat.gene$SigHR, decreasing = T), ]
+
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat < 0) - colSums(plot.mat > 0),
+                          SigHR = colMeans(plot.mat * -1) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$SigHR, decreasing = T), ]
+
+plot.info <- plot.data
+plot.info$Cohort <- factor(as.character(plot.info$TCGA.Cohort), levels = stat.cohort$Cohort)
+plot.info$Gene <- factor(as.character(plot.info$Gene), levels = rev(stat.gene$Gene) )
+
+plot.info <- plot.info[order(plot.info$P_type, decreasing = T), ]
+p <- ggplot(plot.info, aes(Cohort, Gene)) +
+  geom_point(aes(size = HR_type, colour = P_type, fill = P_type), shape = 16, alpha = 0.7) + 
+  xlab("") + ylab("")
+p <- p + theme_base() + scale_size(range = c(1.5,3))
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 12))
+p <- p + theme(axis.text.y = element_text(size = 3))
+p <- p + scale_colour_manual(values = c(`P < 0.05, HR > 1` = "#D01910", `P < 0.05, HR < 1` = "#00599F", `P ≥ 0.05` = "#CCCCCC"))
+p
+```
+
+Related to Extended Data Fig. 3g.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+plot.mat <- matrix(0, nrow = length(stat.gene$Gene), ncol = length(stat.cohort$Cohort))
+rownames(plot.mat) <- stat.gene$Gene
+colnames(plot.mat) <- stat.cohort$Cohort
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- sub$Tag
+}
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#ff9393","#fffef3","#078aef"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              fontsize_col = 10,
+              fontsize_row = 2)
+p
+
+```
+
+
+### MUT-up genes
+
+Related to Fig. 3b.
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+
+plot.data <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS3-Related-to-Figure3A, 3B and S3G.xlsx", sheet = 9, startRow = 2)
+gene.list <- unique(plot.data$Gene)
+
+plot.data$HR_type <- 1
+plot.data$HR_type[which(plot.data$HR < 0.67 | plot.data$HR > 1.5)] <- 1.5
+
+plot.data$P_type <- "P ≥ 0.05"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR > 1)] <- "P < 0.05, HR > 1"
+plot.data$P_type[which(plot.data$P.value < 0.05 & plot.data$HR < 1)] <- "P < 0.05, HR < 1"
+plot.data$P_type <- factor(as.character(plot.data$P_type), levels = c("P < 0.05, HR > 1","P ≥ 0.05","P < 0.05, HR < 1"))
+
+
+plot.data$Tag <- 0
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of unfavorable (HR > 1.5) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of favorable (HR < 0.67) genes")] <- 1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Downregulation (FC < 0.8) of favorable (HR < 0.67) genes")] <- -1
+plot.data$Tag[which(plot.data$Regulation.pattern.upon.ATO.treatment == "Upregulation (FC > 1.25) of unfavorable (HR > 1.5) genes")] <- -1
+
+
+plot.mat <- matrix(0, nrow = length(gene.list), ncol = length(TCGA.ALL))
+rownames(plot.mat) <- gene.list
+colnames(plot.mat) <- TCGA.ALL
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  sub <- sub[which(sub$P.value < 0.05), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- log2(sub$HR)
+}
+stat.gene <- data.frame(Gene = rownames(plot.mat), 
+                        SigCount = rowSums(plot.mat > 0) - rowSums(plot.mat < 0),
+                        SigHR = rowMeans(plot.mat ) )
+stat.gene <- stat.gene[order(stat.gene$SigCount, stat.gene$SigHR, decreasing = T), ]
+
+stat.cohort <- data.frame(Cohort = colnames(plot.mat), 
+                          SigCount = colSums(plot.mat > 0) - colSums(plot.mat < 0),
+                          SigHR = colMeans(plot.mat ) )
+stat.cohort <- stat.cohort[order(stat.cohort$SigCount, stat.cohort$SigHR, decreasing = T), ]
+
+plot.info <- plot.data
+plot.info$Cohort <- factor(as.character(plot.info$TCGA.Cohort), levels = stat.cohort$Cohort)
+plot.info$Gene <- factor(as.character(plot.info$Gene), levels = rev(stat.gene$Gene) )
+
+plot.info <- plot.info[order(plot.info$P_type, decreasing = T), ]
+p <- ggplot(plot.info, aes(Cohort, Gene)) +
+  geom_point(aes(size = HR_type, colour = P_type, fill = P_type), shape = 16, alpha = 0.7) + 
+  xlab("") + ylab("")
+p <- p + theme_base() + scale_size(range = c(1.5,3))
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 12))
+p <- p + theme(axis.text.y = element_text(size = 3))
+p <- p + scale_colour_manual(values = c(`P < 0.05, HR > 1` = "#D01910", `P < 0.05, HR < 1` = "#00599F", `P ≥ 0.05` = "#CCCCCC"))
+p
+```
+
+Related to Extended Data Fig. 3g.
+
+``` {r eval = TRUE, fig.width = 7, fig.height = 5}
+plot.mat <- matrix(0, nrow = length(stat.gene$Gene), ncol = length(stat.cohort$Cohort))
+rownames(plot.mat) <- stat.gene$Gene
+colnames(plot.mat) <- stat.cohort$Cohort
+for (i in 1:ncol(plot.mat)) {
+  sub <- plot.data[which(plot.data$TCGA.Cohort == colnames(plot.mat)[i]), ]
+  plot.mat[match(sub$Gene, rownames(plot.mat)), i] <- sub$Tag
+}
+p <- pheatmap(plot.mat, scale = "none",
+              color = colorRampPalette(c("#ff9393","#fffef3","#078aef"))(501),
+              cluster_row = F, cluster_col = F, border_color = NA,
+              fontsize_col = 10,
+              fontsize_row = 2)
+p
+
+```
+
+### Radar plot
+
+Radar plots predicting treatment sensitivity of p53 rescue therapy in the indicated cancer types
+
+Related to Fig. 3c and 3d.
+
+``` {r eval = TRUE, fig.width = 12, fig.height = 18}
+
+tcga.cohort.potency <- read.xlsx("/Users/daiyuting/Documents/projects/tp53/paper/activity/2023-06-25\ compounds/TableS4-Related-to-Figure3C.xlsx", sheet = 1, startRow = 2)
+tcga.cohort.potency$CohortSim <- str_replace_all(tcga.cohort.potency$Cohort, "TCGA-", "")
+
+idx <- c("Rank.(Powerfulness.in.regulating.p53.targets)",
+         "Rank.(Powerfulness.in.regulating.WT-up.genes)",
+         "Rank.(Powerfulness.in.regulating.MUT-up.genes)",
+         "Rank.(HR.of.p53-mut)",
+         "Rank.(MDM2.expression)",
+         "Rank.(HR.of.expression.of.MUT-up.genes)",
+         "Rank.(HR.of.expression.of.WT-up.genes)",
+         "Rank.(HR.of.expression.of.p53.targets)")
+idx[!idx %in% colnames(tcga.cohort.potency)]
+
+par(mfrow = c(7, 5))
+for (kkk in 1:nrow(tcga.cohort.potency)) {
+  plot.mat <- tcga.cohort.potency[kkk, idx ]
+  plot.mat <- rbind(rep(33, length(plot.mat)), rep(0, length(plot.mat)), plot.mat)
+  colnames(plot.mat) <- c("Power.targets","Power.WT-up","Power.MUT-up","HR.TP53","MDM2","HR.MUT-up","HR.WT-up","HR.targets")
+  radarchart(as.data.frame(plot.mat), 
+             pcol = c( "#dd0000"),
+             pfcol = scales::alpha(c("#f28926"),0.5),
+             plwd = 2, plty = 1, axistype = 1,  
+             caxislabels = seq(0, 33, 11), seg = 3,
+             cglcol = "grey", cglty = 1, cglwd = 0.8, axislabcol = "black", 
+             vlcex = 1.1, pangle=c(10, 45, 120) )
+  title(paste0(tcga.cohort.potency$CohortSim[kkk], " (", tcga.cohort.potency$Total.score[kkk], ")") )
+}
+
+
+
+
+```
+
+
+
+
+
+
+
+

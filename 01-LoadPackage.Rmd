@@ -1,0 +1,37 @@
+
+# Load packages
+
+``` {r eval = TRUE, message = FALSE, warning = FALSE}
+
+library(openxlsx)
+library(dplyr)
+library(DT)
+library(nlme)
+library(DESeq2)
+library(SummarizedExperiment)
+library(openxlsx)
+library(dendextend)
+library(matrixStats)
+library(data.table)
+library(ggpubr)
+library(limma)
+library(DESeq2)
+library(pheatmap)
+library(gplots)
+library(survminer)
+library(survival)
+library(enrichR)
+library(stringr)
+library(ggthemes)
+library(fmsb)
+
+
+# color theme
+tp53.mutant <- c("WT","L130V","L130F","L130R","P142L","V143M","A161T","M237V","G245D","F270I","F270V","V272A","V272M","R248Q","R273H","null")
+tp53.mutant.color <- c("red",rep("#494949","14"),"#EEEEEE")
+names(tp53.mutant.color) <- tp53.mutant
+
+anno.color <- list(
+  Mutant = tp53.mutant.color)
+
+```

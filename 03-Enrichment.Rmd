@@ -1,0 +1,130 @@
+# Enrichment analysis
+
+## Calculated DEGs
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+
+websiteLive <- TRUE
+dbs <- listEnrichrDbs()
+if (websiteLive) head(dbs)
+
+gene.enrich <- list()
+compare.group <- unique(merge.compare.data$Group)
+for (i in 1:length(compare.group) ) {
+  sub.sample <- merge.compare.data[which(merge.compare.data$Group == compare.group[i]), ]
+  if (nrow(sub.sample) == 1) {
+    sub <- rownames(compare.mat[which(compare.mat[, sub.sample$Sample] > 0.58  ), ])
+  } else {
+    sub <- rownames(compare.mat[which(rowMeans(compare.mat[, sub.sample$Sample]) > 0.58 ), ])
+  }
+  gene.enrich <- c(gene.enrich, list(sub = sub))
+}
+names(gene.enrich) <- compare.group
+```
+
+## Enrichr analysis
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+
+enrichr.total <- NULL
+enrichr.db.name <- c("KEGG_2021_Human","MSigDB_Hallmark_2020","TRRUST_Transcription_Factors_2019")
+for (i in 1:length(gene.enrich)) {
+  message(i, "   ", names(gene.enrich)[i] )
+  enrichr.sub <- enrichr(gene.enrich[[i]], enrichr.db.name)
+
+  enrichr.sub$`KEGG_2021_Human`$Database <- "KEGG_2021_Human"
+  enrichr.sub$`MSigDB_Hallmark_2020`$Database <- "MSigDB_Hallmark_2020"
+  enrichr.sub$`TRRUST_Transcription_Factors_2019`$Database <- "TRRUST_Transcription_Factors_2019"
+  
+  sub <- rbind(enrichr.sub$`KEGG_2021_Human`,
+               enrichr.sub$`MSigDB_Hallmark_2020`, 
+               enrichr.sub$`TRRUST_Transcription_Factors_2019` )
+  sub$Sample <- names(gene.enrich)[i]
+  enrichr.total <- rbind(enrichr.total, sub)
+}
+
+
+plot.data <- enrichr.total[which(enrichr.total$P.value < 0.05), ]
+plot.data <- plot.data[-grep(" mouse$", plot.data$Term), ]
+plot.data$Old.P.value <- NULL
+plot.data$Old.Adjusted.P.value <- NULL
+plot.data$Count <- as.numeric(str_replace_all(plot.data$Overlap, regex("/.+"), ""))
+plot.data <- plot.data[which(plot.data$Count >= 10), ]
+
+plot.data$Sample <- factor(as.character(plot.data$Sample), levels = names(gene.enrich))
+plot.data <- plot.data[order(plot.data$Sample, plot.data$Database, plot.data$P.value), ]
+plot.data$Rank <- NA
+for (i in 1:length(names(gene.enrich))) {
+  for (j in 1:length(enrichr.db.name)) {
+    idx <- which(plot.data$Database == enrichr.db.name[j] & plot.data$Sample == names(gene.enrich)[i])
+    if (length(idx) > 0) plot.data$Rank[idx] = 1:length(idx)
+  }
+}
+plot.data <- plot.data[, c("Sample","Term","Count","Overlap","P.value","Adjusted.P.value","Odds.Ratio","Combined.Score","Genes","Rank","Database")]
+
+```
+
+## MSigDB Hallmark
+
+Related to Fig. 1d.
+
+``` {r eval = TRUE, fig.width = 10, fig.height = 7}
+
+plot.info <- plot.data[which(plot.data$Database == "MSigDB_Hallmark_2020"), ]
+plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
+plot.info.sub$Rank <- plot.info.sub$Rank %>% as.factor()
+p <- ggplot(plot.info.sub, aes(x = Sample, y = Term, fill = Rank, color = Rank)) + geom_point(size = 5)
+p <- p + scale_color_manual(values = c(`1` = "black", `2` = "#a3a3a3") )
+p <- p + scale_x_discrete(limits = plot.order)
+p <- p + scale_y_discrete(limits = rev(c("p53 Pathway","Apoptosis","TNF-alpha Signaling via NF-kB","Interferon Gamma Response","Interferon Alpha Response","Inflammatory Response","Coagulation","Complement","E2F Targets","Hypoxia","Estrogen Response Early","Estrogen Response Late","KRAS Signaling Dn","KRAS Signaling Up","mTORC1 Signaling","Myogenesis","Unfolded Protein Response","Xenobiotic Metabolism")) )
+p <- p + theme_base() + theme(plot.background = element_blank())
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10, color = "black"))
+p <- p + xlab("") + ylab("MSigDB Hallmark 2020")
+p
+```
+
+## KEGG database
+
+Related to Extended Data Fig. 1e.
+
+``` {r eval = TRUE, fig.width = 12, fig.height = 7}
+plot.info <- plot.data[which(plot.data$Database == "KEGG_2021_Human"), ]
+plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
+plot.info.sub$Rank <- plot.info.sub$Rank %>% as.factor()
+p <- ggplot(plot.info.sub, aes(x = Sample, y = Term, fill = Rank, color = Rank)) + geom_point(size = 5)
+p <- p + scale_color_manual(values = c(`1` = "black", `2` = "#a3a3a3") )
+p <- p + scale_x_discrete(limits = plot.order)
+p <- p + scale_y_discrete(limits = rev(c("p53 signaling pathway","Lysosome","NOD-like receptor signaling pathway","Osteoclast differentiation","Mineral absorption","Complement and coagulation cascades","Cytokine-cytokine receptor interaction","Neuroactive ligand-receptor interaction","Colorectal cancer","Pathways in cancer","Herpes simplex virus 1 infection","Coronavirus disease","Epstein-Barr virus infection","Human T-cell leukemia virus 1 infection","Lipid and atherosclerosis","MAPK signaling pathway","mTOR signaling pathway","Measles","Olfactory transduction","Protein processing in endoplasmic reticulum","Staphylococcus aureus infection","Viral protein interaction with cytokine and cytokine receptor")) )
+p <- p + theme_base() + theme(plot.background = element_blank())
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10, color = "black"))
+p <- p + xlab("") + ylab("KEGG 2021 Human")
+p
+```
+
+
+## TRRUST Transcription Factors
+
+Related to Extended Data Fig. 1e.
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 7}
+plot.info <- plot.data[which(plot.data$Database == "TRRUST_Transcription_Factors_2019"), ]
+plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
+plot.info.sub$Rank <- plot.info.sub$Rank %>% as.factor()
+p <- ggplot(plot.info.sub, aes(x = Sample, y = Term, fill = Rank, color = Rank)) + geom_point(size = 5)
+p <- p + scale_color_manual(values = c(`1` = "black", `2` = "#a3a3a3") )
+p <- p + scale_x_discrete(limits = plot.order)
+p <- p + scale_y_discrete(limits = rev(c("TP53 human","BRCA1 human","STAT1 human","STAT3 human","SPI1 human","NFKB1 human","JUN human","ATF4 human","RELA human","CEBPA human","CEBPB human","ETS1 human","SIRT1 human","SMAD3 human","SP1 human")) )
+p <- p + theme_base() + theme(plot.background = element_blank())
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10, color = "black"))
+p <- p + xlab("") + ylab("TRRUST Transcription Factors 2019")
+p
+
+```
+
+
+
+
+
+
+
+
