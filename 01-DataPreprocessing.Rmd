@@ -1,0 +1,187 @@
+# Data Preprocessing
+
+## RNA-seq data
+
+The expression matrix of ATO and PAT was generated from raw RNA-sequencing data (FASTQ format) using salmon (https://salmon.readthedocs.io/en/latest/salmon.html).
+
+``` {r eval = FALSE}
+
+#!/bin/bash
+#SBATCH -p SVC # partition (queue)
+#SBATCH --job-name=p53
+#SBATCH -n 8
+#SBATCH --array=1-10
+#SBATCH -t 7-00:00 # time (D-HH:MM)
+#SBATCH -o _log/salmon.%N.%A_%a.out # STDOUT
+#SBATCH -e _log/salmon.%N.%A_%a.err # STDERR
+#SBATCH --mail-type=END,FAIL # notifications for job done & fail
+#SBATCH --mail-user=XX
+
+id=`sed -n ${SLURM_ARRAY_TASK_ID}p sample.txt`
+echo "${id}"
+
+fq_path=${path_to_fastq}
+
+fq1=${fq_path}/${id}_R1.fq.gz
+fq2=${fq_path}/${id}_R2.fq.gz
+
+gtf_file=${path_to_reference}/gencode.v40.annotation.gtf
+salmon_index=${path_to_reference}/gencode.v40_salmon-1.8
+out_path=${out_path}
+
+$SALMON_1_8 quant -p 8 -l IU -i ${salmon_index} -o ${out_path}/${id} -1 ${fq1} -2 ${fq2} -g ${gtf_file} --gcBias --validateMappings
+
+```
+
+The raw expression of RNA-seq data generated using salmon could be downloaded via https://github.com/NRCTM-bioinfo/p53_compounds. The `Log2(FPKM + 1)` was used for evaluation.
+
+
+## GEO data
+
+The `GEOquery` was used for download of GEO-based expression data.
+
+``` {r eval = FALSE}
+
+# Download GEO data using GEOquery
+# Taking GSE15658 as an example
+seq.name.list <- c("GSE15658")
+
+for (i in 1:length(seq.name.list)) {
+seq.name = seq.name.list[i]
+message(i , "   ", seq.name)
+
+gset <- getGEO(seq.name, GSEMatrix = TRUE, AnnotGPL = TRUE, getGPL = TRUE )
+save(gset, file = paste0( seq.name, ".geo.rds"))
+}
+
+
+# load GEO and and perform average intensity 
+load(paste0("geo/GSE15658.geo.rds"))
+
+exprset <- exprs(gset[[1]])
+pdata <- pData(gset[[1]])
+fdata <- fData(gset[[1]])
+
+exprset <- na.omit(exprset)
+fdata <- fdata[match(rownames(exprset), fdata[, 1]), ]
+exprset <- exprset - min(exprset)
+
+sum(row.names(exprset) != fdata[, "ID"])
+exp_mat <- aggregate(exprset, list(Symbol = fdata[, "Gene symbol"]), mean)
+exp_mat <- exp_mat[exp_mat$Symbol != "", ]
+rownames(exp_mat) <- exp_mat$Symbol
+exp_mat$Symbol <- NULL
+
+exp_mat <- normalizeBetweenArrays(exp_mat)
+
+
+# For the dataset GSE137574, we used anovar to perform annotation.
+load(paste0("geo/GSE137574.geo.rds"))
+
+exprset <- exprs(gset[[1]])
+pdata <- pData(gset[[1]])
+fdata <- fData(gset[[1]])
+
+exprset <- na.omit(exprset)
+fdata <- fdata[match(rownames(exprset), fdata[, 1]), ]
+exprset <- exprset - min(exprset)
+
+dim(fdata[which(fdata$unigene != "---"), ])
+out.data <- fdata[which(fdata$unigene != "---"), ]
+out.data <- out.data[, c("seqname","start","stop","strand","probeset_id","ID")]
+out.data$strand = "0"
+out.data$probeset_id = "-"
+write.table(out.data, "geo/GSE137574.avinput", row.names = F, col.names = F, sep = "\t", quote = F)
+
+"table_annovar.pl GSE137574.avinput /public/home/daiyt/bin/annovar/annovar/humandb -buildver hg19 -out GSE137574.anno  -remove -protocol refGene -operation g -nastring . "
+
+out.data <- read.table("geo/GSE137574.anno.hg19_multianno.txt", header = T, sep = "\t")
+out.data$Gene <- str_replace_all(out.data$Gene.refGene, regex(";.+"), "")
+
+fdata <- fdata[which(fdata$unigene != "---"), ]
+sum(fdata$start != out.data$Start)
+exprset <- exprset[fdata$ID, ]
+fdata$GeneSymbol <- out.data$Gene
+
+sum(row.names(exprset) != fdata[, "ID"])
+exp_mat <- aggregate(exprset, list(Symbol = fdata[, "GeneSymbol"]), mean)
+exp_mat <- exp_mat[exp_mat$Symbol != "", ]
+rownames(exp_mat) <- exp_mat$Symbol
+exp_mat$Symbol <- NULL
+
+exp_mat <- log2(exp_mat)
+
+
+```
+
+The raw data of array-based GEO data could be download via https://github.com/NRCTM-bioinfo/p53_compounds.
+
+## Source data
+
+One dataset (COTI-2 compound using RNA-seq) was downloaded directly from the supplementary data provided by the original article. 
+
+``` {r eval = FALSE}
+
+plot.data <- read.xlsx("COTI-2.xlsx")
+plot.data <- plot.data[match(unique(plot.data$Symbol), plot.data$Symbol), ]
+plot.data <- plot.data[which(!is.na(plot.data$Symbol)), ]
+plot.mat <- plot.data[, 7:30]
+rownames(plot.mat) <- plot.data$Symbol
+
+countToFpkm <- function(count, geneLength){
+  fpkm <- apply(count, 2, function(e){ e*1000*1000000/sum(e)/geneLength })
+  return(fpkm)
+}
+
+geneLength <- plot.data$TotalExonLength
+names(geneLength) <- plot.data$Symbol
+exp_mat <- log2(countToFpkm(as.matrix(plot.mat), geneLength) + 1)
+
+```
+
+The raw data of this dataset could be download via https://github.com/NRCTM-bioinfo/p53_compounds.
+
+Gene Symbol Converter
+
+We noticed some gene symbol for several datasets was old version, here we provided the source code for gene symbol transformation.
+
+``` {r eval = FALSE}
+
+rownames(exp_mat)[which(rownames(exp_mat) == "WDR63")] = "DNAI3"
+rownames(exp_mat)[which(rownames(exp_mat) == "FAM198B")] = "GASK1B"
+rownames(exp_mat)[which(rownames(exp_mat) == "FAM212B")] = "INKA2"
+rownames(exp_mat)[which(rownames(exp_mat) == "KIAA1456")] = "TRMT9B"
+rownames(exp_mat)[which(rownames(exp_mat) == "LINC01314")] = "CTXND1"
+rownames(exp_mat)[which(rownames(exp_mat) == "MARC2")] = "MTARC2"
+rownames(exp_mat)[which(rownames(exp_mat) == "C11orf63")] = "JHY"
+rownames(exp_mat)[which(rownames(exp_mat) == "LINC00959")] = "C10orf143"
+rownames(exp_mat)[which(rownames(exp_mat) == "FAM155B")] = "NALF2"
+rownames(exp_mat)[which(rownames(exp_mat) == "FAM46C")] = "TENT5C"
+rownames(exp_mat)[which(rownames(exp_mat) == "FAM19A1")] = "TAFA1"
+rownames(exp_mat)[which(rownames(exp_mat) == "C9orf171")] = "CFAP77"
+rownames(exp_mat)[which(rownames(exp_mat) == "C1orf168")] = "FYB2"
+rownames(exp_mat)[which(rownames(exp_mat) == "ARSE")] = "ARSL"
+rownames(exp_mat)[which(rownames(exp_mat) == "SPERT")] = "CBY2"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2AJ")] = "H2AC14"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H1D")] = "H1-3"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2BO")] = "H2BC17"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2AE")] = "H2AC8"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST3H2BB")] = "H2BC26"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H3J")] = "H3C12"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2AI")] = "H2AC13"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2AG")] = "H2AC11"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2BK")] = "H2BC12"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H4H")] = "H4C8"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2BJ")] = "H2BC11"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2AM")] = "H2AC17"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H3H")] = "H3C10"
+rownames(exp_mat)[which(rownames(exp_mat) == "CCDC163P")] = "CCDC163"
+rownames(exp_mat)[which(rownames(exp_mat) == "HIST1H2BL")] = "H2BC13"
+
+```
+
+## TCGA data
+
+The gene expression data and clinical data of the TCGA Pan-Cancer cohorts included in this study can be accessed through the following link: https://xenabrowser.net/datapages/
+
+

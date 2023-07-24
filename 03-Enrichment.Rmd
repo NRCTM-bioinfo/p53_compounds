@@ -2,7 +2,9 @@
 
 ## Calculated DEGs
 
-``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+The differentially expressed genes (DEGs) was calculated using FC > 1.5 (log2FC > 0.58).
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5, fig.align = 'center'}
 
 websiteLive <- TRUE
 dbs <- listEnrichrDbs()
@@ -20,11 +22,15 @@ for (i in 1:length(compare.group) ) {
   gene.enrich <- c(gene.enrich, list(sub = sub))
 }
 names(gene.enrich) <- compare.group
+
 ```
 
 ## Enrichr analysis
 
-``` {r eval = TRUE, fig.width = 8, fig.height = 5}
+Enrichment analysis was conducted by Enrichr (https://maayanlab.cloud/Enrichr/).
+
+
+``` {r eval = TRUE, fig.width = 8, fig.height = 5, fig.align = 'center'}
 
 enrichr.total <- NULL
 enrichr.db.name <- c("KEGG_2021_Human","MSigDB_Hallmark_2020","TRRUST_Transcription_Factors_2019")
@@ -66,9 +72,7 @@ plot.data <- plot.data[, c("Sample","Term","Count","Overlap","P.value","Adjusted
 
 ## MSigDB Hallmark
 
-Related to Fig. 1d.
-
-``` {r eval = TRUE, fig.width = 10, fig.height = 7}
+``` {r eval = TRUE, fig.width = 10, fig.height = 7, fig.align = 'center'}
 
 plot.info <- plot.data[which(plot.data$Database == "MSigDB_Hallmark_2020"), ]
 plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
@@ -83,11 +87,9 @@ p <- p + xlab("") + ylab("MSigDB Hallmark 2020")
 p
 ```
 
-## KEGG database
+## KEGG
 
-Related to Extended Data Fig. 1e.
-
-``` {r eval = TRUE, fig.width = 12, fig.height = 7}
+``` {r eval = TRUE, fig.width = 12, fig.height = 7, fig.align = 'center'}
 plot.info <- plot.data[which(plot.data$Database == "KEGG_2021_Human"), ]
 plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
 plot.info.sub$Rank <- plot.info.sub$Rank %>% as.factor()
@@ -102,11 +104,9 @@ p
 ```
 
 
-## TRRUST Transcription Factors
+## TRRUST
 
-Related to Extended Data Fig. 1e.
-
-``` {r eval = TRUE, fig.width = 8, fig.height = 7}
+``` {r eval = TRUE, fig.width = 8, fig.height = 7, fig.align = 'center'}
 plot.info <- plot.data[which(plot.data$Database == "TRRUST_Transcription_Factors_2019"), ]
 plot.info.sub <- plot.info %>% group_by(Sample) %>% top_n(n = -2, wt = Rank)
 plot.info.sub$Rank <- plot.info.sub$Rank %>% as.factor()

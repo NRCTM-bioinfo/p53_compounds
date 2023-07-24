@@ -1,0 +1,282 @@
+# Target Evaluation
+
+## Load packages
+
+``` {r eval = TRUE, message = FALSE, warning = FALSE}
+
+library(openxlsx)
+library(dplyr)
+library(DT)
+library(nlme)
+library(DESeq2)
+library(SummarizedExperiment)
+library(openxlsx)
+library(dendextend)
+library(matrixStats)
+library(data.table)
+library(ggpubr)
+library(limma)
+library(DESeq2)
+library(pheatmap)
+library(gplots)
+library(survminer)
+library(survival)
+library(enrichR)
+library(stringr)
+library(ggthemes)
+library(fmsb)
+
+
+# color theme
+tp53.mutant <- c("WT","L130V","L130F","L130R","P142L","V143M","A161T","M237V","G245D","F270I","F270V","V272A","V272M","R248Q","R273H","null")
+tp53.mutant.color <- c("red",rep("#494949","14"),"#E3E3E3")
+names(tp53.mutant.color) <- tp53.mutant
+
+anno.color <- list(
+  Mutant = tp53.mutant.color)
+
+```
+
+## Merge profiling
+
+We provided the merged profiling, which could be downloaded via https://github.com/NRCTM-bioinfo/p53_compounds.
+
+``` {r eval = TRUE, fig.width = 10, fig.height = 4, fig.align = 'center'}
+
+tp53.targets <- read.xlsx("02.Profiling/p53_targets.xlsx")
+rownames(tp53.targets) <- tp53.targets$Gene
+
+tp53.target.g32 <- tp53.targets$Gene[which(tp53.targets$LiteratureNum >= 10)]
+tp53.target.g116 <- tp53.targets$Gene
+
+merge.meta.data <- read.xlsx("02.Profiling/p53_meta.xlsx", sheet = 1)
+
+merge.compare.data <- read.xlsx("02.Profiling/TableS1A.xlsx", sheet = 1, startRow = 2)
+merge.compare.data$Sample <- merge.compare.data$`Sample.name.(after.treatment)`
+merge.compare.data$Control <- merge.compare.data$`Sample.name.(untreated.samples)`
+merge.compare.data$Group <- str_replace(merge.compare.data$Sample, regex("_rep.$"), "")
+rownames(merge.compare.data) <- merge.compare.data$`Sample.name.(after.treatment)`
+
+merge.mat <- read.xlsx("02.Profiling/TableS1B.xlsx", sheet = 1, startRow = 3, rowNames = T)
+
+
+```
+
+## Normalization
+
+``` {r eval = TRUE, fig.width = 10, fig.height = 4, fig.align = 'center'}
+
+# Median normalization
+merge.nor.mat <- merge.mat
+sub.1 <- aggregate(colMedians(as.matrix(merge.nor.mat)), 
+                   list(Cell = merge.meta.data$Dataset), min)
+for (i in 1:ncol(merge.nor.mat)) {
+  merge.nor.mat[, i] <- merge.nor.mat[, i] - sub.1$x[which(sub.1$Cell == merge.meta.data$Dataset[i])]
+}
+
+
+# Generation of fold change (Log2-transformed for FPKM) of cell line samples after treatment compared to before treatment 
+compare.mat <- NULL
+for (i in 1:nrow(merge.compare.data)) {
+  if (length(grep("; ", merge.compare.data$Control[i])) > 0) {
+    sub.1 <- unlist(str_split(merge.compare.data$Control[i], "; "))
+    sub <- merge.nor.mat[, merge.compare.data$Sample[i]] - rowMeans(merge.nor.mat[, sub.1])
+  } else {
+    sub <- merge.nor.mat[, merge.compare.data$Sample[i]] - merge.nor.mat[, merge.compare.data$Control[i]]
+  }
+  compare.mat <- cbind(compare.mat, sub)
+}
+colnames(compare.mat) <- merge.compare.data$Sample
+
+head(compare.mat, 3)
+
+```
+
+The `compare.mat` was generated and provided as Table S1C.
+
+
+## 32 confident p53 targets
+
+The heatmap plot was used for visualization of the log2-transformed fold change of 32 confident p53 targets.
+
+``` {r eval = TRUE, fig.width = 10, fig.height = 5, fig.align = 'center'}
+
+my.breaks <- c(seq(-1.5, -0.01, by = 0.001), seq(0.01, 1.5, by = 0.001) ) 
+my.colors <- c(colorRampPalette(colors = c("#00599F","#00599F","#287dba","#62aee5","#a8dcff","white"))(length(my.breaks)/2), 
+               colorRampPalette(colors = c("white","#ffca79","#ef6e51","#db1b18","#b50600","#b50600"))(length(my.breaks)/2))
+
+plot.mat <- compare.mat[tp53.target.g32, ]
+anno.data <- data.frame(row.names = merge.compare.data$Sample, 
+                        Mutant = merge.compare.data$p53.status)
+
+# Visualization of the 32 confident p53 targets
+p <- pheatmap(plot.mat, scale = "none",
+              color = my.colors, breaks = my.breaks,
+              cluster_row = F, cluster_col = F, border_color = NA,
+              annotation_col = anno.data, 
+              annotation_colors = anno.color,
+              clustering_method = "ward.D2",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 6,
+              fontsize_row = 6)
+p
+
+
+# Visualization of the other 18,264 genes (exclude the 32 confident p53 targets)
+plot.mat <- compare.mat[!rownames(compare.mat) %in% tp53.target.g32, ]
+p <- pheatmap(plot.mat, scale = "none",
+              color = my.colors, breaks = my.breaks,
+              cluster_row = F, cluster_col = F, border_color = NA,
+              annotation_col = anno.data, 
+              annotation_colors = anno.color,
+              clustering_method = "ward.D2",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 6,
+              fontsize_row = 0.1)
+p
+
+```
+
+
+## 116 p53 targets
+
+The heatmap plot was used for visualization of the log2-transformed fold change of the 116 p53 targets.
+
+
+``` {r eval = TRUE, fig.width = 10, fig.height = 5, fig.align = 'center'}
+
+my.breaks <- c(seq(-1.5, -0.01, by = 0.001), seq(0.01, 1.5, by = 0.001) ) 
+my.colors <- c(colorRampPalette(colors = c("#00599F","#00599F","#287dba","#62aee5","#a8dcff","white"))(length(my.breaks)/2), 
+               colorRampPalette(colors = c("white","#ffca79","#ef6e51","#db1b18","#b50600","#b50600"))(length(my.breaks)/2))
+
+plot.mat <- compare.mat[tp53.target.g116, ]
+anno.data <- data.frame(row.names = merge.compare.data$Sample, Mutant = merge.compare.data$p53.status)
+
+# Visualization of the 116 p53 targets
+p <- pheatmap(plot.mat, scale = "none",
+              color = my.colors, breaks = my.breaks,
+              cluster_row = F, cluster_col = F, border_color = NA,
+              annotation_col = anno.data, 
+              annotation_colors = anno.color,
+              clustering_method = "ward.D2",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 6,
+              fontsize_row = 2)
+p
+
+
+# Visualization of the other 18,180 genes (exclude the 116 p53 targets)
+plot.mat <- compare.mat[!rownames(compare.mat) %in% tp53.target.g116, ]
+p <- pheatmap(plot.mat, scale = "none",
+              color = my.colors, breaks = my.breaks,
+              cluster_row = F, cluster_col = F, border_color = NA,
+              annotation_col = anno.data, 
+              annotation_colors = anno.color,
+              clustering_method = "ward.D2",
+              clustering_distance_rows = "manhattan",
+              clustering_distance_cols = "manhattan",
+              fontsize_col = 8,
+              fontsize_row = 0.1)
+p
+
+```
+
+
+### p53 transactivation
+
+<div style="text-align: center;">
+  <img width="600" src="figures/p53-act.png">
+</div>
+
+``` {r eval = TRUE, fig.width = 12, fig.height = 4, fig.align = 'center'}
+
+plot.order <- c("U937_WT","U937_L130V_ATO","U937_L130F_ATO","U937_L130R_ATO","U937_P142L_ATO","U937_V143M_ATO","U937_M237V_ATO","U937_F270I_ATO","U937_F270V_ATO","U937_V272A_ATO","U937_V272M_ATO","U937_V272M_PAT","Kasumi-1_R248Q_Kevetrin_6h","SKM1_R248Q_APR-246","staET7.1_R273H_APR-246","staET7.2_R273H_APR-246","staET7.3_R273H_APR-246","Saos-2_R273H_APR-246_6h","Saos-2_R273H_APR-246_12h","Kasumi-1_R248Q_Kevetrin_48h","PCI13_G245D_COTI-2","U266_A161T_PRIMA-1","U937_R273H_ATO","U937_R273H_PAT","PCI13_G245D_CDDP","8266R5_null_PRIMA-1","Saos-2_null_APR-246_6h","Saos-2_null_APR-246_12h")
+
+total.act <- NULL
+total.test.cutoff <- c(1.2, 1.5, 2.0)
+
+for (i in 1:length(total.test.cutoff)) {
+  
+  cutoff_tmp <- round(log2(total.test.cutoff[i]), 2)
+  plot.data <- data.frame(Sample = colnames(compare.mat),
+                          UP_116 = colSums(compare.mat[tp53.target.g116, ] > cutoff_tmp) ,
+                          UP_32 = colSums(compare.mat[tp53.target.g32, ] > cutoff_tmp),
+                          UP_other_116 = colSums(compare.mat[!rownames(compare.mat) %in% tp53.target.g116, ] > cutoff_tmp) ,
+                          UP_other_32 = colSums(compare.mat[!rownames(compare.mat) %in% tp53.target.g32, ] > cutoff_tmp) )
+  plot.data$Mutant <- merge.compare.data$p53.status[match(plot.data$Sample, merge.compare.data$Sample)]
+  plot.data$MutantType <- "MUT"
+  plot.data$MutantType[which(plot.data$Mutant == "WT")] <- "WT"
+  
+  plot.data$Act_32 <- (plot.data$UP_32) / (plot.data$UP_other_32 + plot.data$UP_32) * 100
+  plot.data$Act_116 <- (plot.data$UP_116) / (plot.data$UP_other_116 + plot.data$UP_116) * 100
+  plot.data$Group <- merge.compare.data$Group[match(plot.data$Sample, merge.compare.data$Sample)]
+  
+  plot.data$Act_32[which(is.na(plot.data$Act_32))] = 1
+  plot.data$Act_116[which(is.na(plot.data$Act_116))] = 1
+  
+  plot.data.group <- aggregate(plot.data[, c("Act_32","Act_116")], list(Sample = plot.data$Group), mean)
+  plot.data.group <- plot.data.group[match(plot.order, plot.data.group$Sample), ]
+  plot.data.group$Mutant <- merge.compare.data$p53.status[match(plot.data.group$Sample, merge.compare.data$Group)]
+  plot.data.group$MutantType <- "MUT"
+  plot.data.group$MutantType[which(plot.data.group$Mutant == "null")] <- "null_other"
+  plot.data.group$MutantType[which(plot.data.group$Sample %in% c("U937_R273H_ATO","U937_R273H_PAT","PCI13_G245D_CDDP"))] <- "null_other"
+  plot.data.group$MutantType[which(plot.data.group$Mutant == "WT")] <- "WT"
+
+  if (cutoff_tmp != 1) {
+    group.tag <- paste0("FC_", total.test.cutoff[i] )
+  } else {
+    group.tag <- "FC_2.0"
+  }
+  
+  plot.data.group$Group <- group.tag
+
+  total.act <- rbind(total.act, plot.data.group)
+}
+
+total.act$Group <- factor(as.character(total.act$Group), levels = c("FC_1.5","FC_1.2","FC_2.0"))
+
+p <- ggbarplot(total.act, x = "Sample", y = "Act_32",
+               color = "MutantType", fill = "MutantType",
+               sorting = "none", size = 0.5,
+               order = plot.order,
+               main = paste0("32 confident p53 targets"), xlab = "", ylab = "",
+               palette = c("black","#A3A3A3","red"), width = 0.6 ) + theme_few()
+p <- p + geom_hline(yintercept = 0, linetype = 2, color = "black")
+p <- p + theme_base() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 4))
+p <- p + theme(plot.background = element_blank())
+p <- p + scale_y_continuous(limits = c(0,11) )
+p <- p + facet_wrap( ~ Group, ncol = 3)
+p
+
+
+p <- ggbarplot(total.act, x = "Sample", y = "Act_116",
+               color = "MutantType", fill = "MutantType",
+               sorting = "none", size = 0.5,
+               order = plot.order,
+               main = paste0("116 p53 targets"), xlab = "", ylab = "",
+               palette = c("black","#A3A3A3","red"), width = 0.6 ) + theme_few()
+p <- p + geom_hline(yintercept = 0, linetype = 2, color = "black")
+p <- p + theme_base() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 4))
+p <- p + theme(plot.background = element_blank())
+p <- p + scale_y_continuous(limits = c(0,15) )
+p <- p + facet_wrap( ~ Group, ncol = 3)
+p
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

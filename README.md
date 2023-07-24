@@ -1,8 +1,10 @@
 # p53 compounds
 
-This is the source code for p53 compounds evaluation analysis in p53 compounds project.
+This is the source code for the p53 compounds evaluation analysis in the p53 compounds project.
 
-This script needs to be run in the R environment and is applicable to various platforms.
+To run this script, you will need the R environment, and it is compatible with various platforms.
 
-The detail tutorial can be found via https://nrctm-bioinfo.github.io/p53_compounds/index.html
+For a detailed tutorial, please visit https://nrctm-bioinfo.github.io/p53_compounds/index.html.
+
+
 
