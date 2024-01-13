@@ -74,7 +74,7 @@ plot.data <- plot.data[, c("Sample","Term","Count","Overlap","P.value","Adjusted
 
 ``` {r eval = TRUE, fig.width = 12, fig.height = 10, fig.align = 'center'}
 # HALLMARK
-plot.data <- read.xlsx("suppdata/S1E.xlsx", sheet = 1, startRow = 6)
+plot.data <- read.xlsx("01.Profiling/Table3.xlsx", sheet = 1, startRow = 6)
 plot.data <- plot.data[, 1:9]
 colnames(plot.data) <- c("Sample","Term","Top","Count","Genes","Overlap","Pvalue","logP","Padj")
 plot.order <- c("U937_WT","U937_L130V_ATO","U937_L130F_ATO","U937_L130R_ATO","U937_P142L_ATO","U937_V143M_ATO","U937_M237V_ATO","U937_F270I_ATO","U937_F270V_ATO","U937_V272A_ATO","U937_V272M_ATO","U937_V272M_PAT","Kasumi-1_R248Q_Kevetrin_6h","SKM1_R248Q_APR-246","staET7.1_R273H_APR-246","staET7.2_R273H_APR-246","staET7.3_R273H_APR-246","Saos-2_R273H_APR-246_6h","Saos-2_R273H_APR-246_12h","Kasumi-1_R248Q_Kevetrin_48h","PCI13_G245D_COTI-2","U266_A161T_PRIMA-1","U937_R273H_ATO","U937_R273H_PAT","PCI13_G245D_CDDP","8266R5_null_PRIMA-1","Saos-2_null_APR-246_6h","Saos-2_null_APR-246_12h")
@@ -121,7 +121,7 @@ p
 
 
 # KEGG
-plot.data <- read.xlsx("suppdata/S1E.xlsx", sheet = 1, startRow = 6)
+plot.data <- read.xlsx("01.Profiling/Table3.xlsx", sheet = 1, startRow = 6)
 plot.data <- plot.data[, 10:18]
 colnames(plot.data) <- c("Sample","Term","Top","Count","Genes","Overlap","Pvalue","logP","Padj")
 plot.order <- c("U937_WT","U937_L130V_ATO","U937_L130F_ATO","U937_L130R_ATO","U937_P142L_ATO","U937_V143M_ATO","U937_M237V_ATO","U937_F270I_ATO","U937_F270V_ATO","U937_V272A_ATO","U937_V272M_ATO","U937_V272M_PAT","Kasumi-1_R248Q_Kevetrin_6h","SKM1_R248Q_APR-246","staET7.1_R273H_APR-246","staET7.2_R273H_APR-246","staET7.3_R273H_APR-246","Saos-2_R273H_APR-246_6h","Saos-2_R273H_APR-246_12h","Kasumi-1_R248Q_Kevetrin_48h","PCI13_G245D_COTI-2","U266_A161T_PRIMA-1","U937_R273H_ATO","U937_R273H_PAT","PCI13_G245D_CDDP","8266R5_null_PRIMA-1","Saos-2_null_APR-246_6h","Saos-2_null_APR-246_12h")
@@ -154,7 +154,7 @@ p
 
 
 # TRUST
-plot.data <- read.xlsx("suppdata/S1E.xlsx", sheet = 1, startRow = 6)
+plot.data <- read.xlsx("01.Profiling/Table3.xlsx", sheet = 1, startRow = 6)
 plot.data <- plot.data[, 19:27]
 colnames(plot.data) <- c("Sample","Term","Top","Count","Genes","Overlap","Pvalue","logP","Padj")
 plot.order <- c("U937_WT","U937_L130V_ATO","U937_L130F_ATO","U937_L130R_ATO","U937_P142L_ATO","U937_V143M_ATO","U937_M237V_ATO","U937_F270I_ATO","U937_F270V_ATO","U937_V272A_ATO","U937_V272M_ATO","U937_V272M_PAT","Kasumi-1_R248Q_Kevetrin_6h","SKM1_R248Q_APR-246","staET7.1_R273H_APR-246","staET7.2_R273H_APR-246","staET7.3_R273H_APR-246","Saos-2_R273H_APR-246_6h","Saos-2_R273H_APR-246_12h","Kasumi-1_R248Q_Kevetrin_48h","PCI13_G245D_COTI-2","U266_A161T_PRIMA-1","U937_R273H_ATO","U937_R273H_PAT","PCI13_G245D_CDDP","8266R5_null_PRIMA-1","Saos-2_null_APR-246_6h","Saos-2_null_APR-246_12h")

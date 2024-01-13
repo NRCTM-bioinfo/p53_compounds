@@ -130,11 +130,11 @@ saveRDS(gene.info, "analysis/gene.info.rds")
 
 
 ############## boxplot
-cmap.db <- "/Users/daiyuting/Documents/projects/tcga/cmap/analysis/cell"
+cmap.db <- ""
 cmap.meta <- read.xlsx(paste0(cmap.db, "/1.JURKAT.cmap.meta.xlsx"), sheet = 1, rowNames = T)
 cmap.exp <- read.xlsx(paste0(cmap.db, "/1.JURKAT.cmap.meta.xlsx"), sheet = 2, rowNames = T)
 
-cmap.gene.info <- read.xlsx("/Users/daiyuting/Documents/projects/tcga/cmap/analysis/gene.info.xlsx")
+cmap.gene.info <- read.xlsx("gene.info.xlsx")
 cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$feature_space == 'landmark'), ]
 cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$gene_symbol %in% rownames(cmap.exp)), ]
 
@@ -227,11 +227,11 @@ ggsave(paste0("output/9.pcr/1.jurkat.bar.BAX.cmap.pdf"), p, width = 9, height = 
 
 ########################################################################################################
 ##### PC3
-cmap.db <- "/Users/daiyuting/Documents/projects/tcga/cmap/analysis/cell"
+cmap.db <- "l"
 cmap.meta <- read.xlsx(paste0(cmap.db, "/2.PC3.cmap.meta.xlsx"), sheet = 1, rowNames = T)
 cmap.exp <- read.xlsx(paste0(cmap.db, "/2.PC3.cmap.meta.xlsx"), sheet = 2, rowNames = T)
 
-cmap.gene.info <- read.xlsx("/Users/daiyuting/Documents/projects/tcga/cmap/analysis/gene.info.xlsx")
+cmap.gene.info <- read.xlsx("gene.info.xlsx")
 cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$feature_space == 'landmark'), ]
 cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$gene_symbol %in% rownames(cmap.exp)), ]
 

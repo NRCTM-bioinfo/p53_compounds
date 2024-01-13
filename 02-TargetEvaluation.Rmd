@@ -43,21 +43,21 @@ We provided the merged profiling, which could be downloaded via https://github.c
 
 ``` {r eval = TRUE, fig.width = 10, fig.height = 4, fig.align = 'center'}
 
-tp53.targets <- read.xlsx("02.Profiling/p53_targets.xlsx")
+tp53.targets <- read.xlsx("01.Profiling/p53_targets.xlsx")
 rownames(tp53.targets) <- tp53.targets$Gene
 
 tp53.target.g32 <- tp53.targets$Gene[which(tp53.targets$LiteratureNum >= 10)]
 tp53.target.g116 <- tp53.targets$Gene
 
-merge.meta.data <- read.xlsx("02.Profiling/p53_meta.xlsx", sheet = 1)
+merge.meta.data <- read.xlsx("01.Profiling/p53_meta.xlsx", sheet = 1)
 
-merge.compare.data <- read.xlsx("02.Profiling/TableS1A.xlsx", sheet = 1, startRow = 2)
+merge.compare.data <- read.xlsx("01.Profiling/Table1.xlsx", sheet = 1, startRow = 2)
 merge.compare.data$Sample <- merge.compare.data$`Sample.name.(after.treatment)`
 merge.compare.data$Control <- merge.compare.data$`Sample.name.(untreated.samples)`
 merge.compare.data$Group <- str_replace(merge.compare.data$Sample, regex("_rep.$"), "")
 rownames(merge.compare.data) <- merge.compare.data$`Sample.name.(after.treatment)`
 
-merge.mat <- read.xlsx("02.Profiling/TableS1B.xlsx", sheet = 1, startRow = 3, rowNames = T)
+merge.mat <- read.xlsx("01.Profiling/Table2.xlsx", sheet = 1, startRow = 3, rowNames = T)
 
 
 ```
@@ -91,8 +91,6 @@ colnames(compare.mat) <- merge.compare.data$Sample
 head(compare.mat, 3)
 
 ```
-
-The `compare.mat` was generated and provided as Table S1C.
 
 
 ## 32 confident p53 targets

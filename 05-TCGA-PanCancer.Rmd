@@ -55,14 +55,14 @@ for (kkk in 1:length(TCGA.ALL)) {
 }
 
 total.deg$Cohort <- factor(as.character(total.deg$Cohort), levels = TCGA.ALL)
-saveRDS(total.deg, "03.tcga/degs_tp53_wtup_top.rds")
+saveRDS(total.deg, "02.tcga/degs_tp53_wtup_top.rds")
 
 ```
 
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-total.deg.wtup <- readRDS("03.tcga/degs_tp53_wtup_top.rds")
+total.deg.wtup <- readRDS("02.tcga/degs_tp53_wtup_top.rds")
 
 tp53.wtup.top <- table(total.deg.wtup[, c("Gene","Cohort")])
 tp53.wtup.top <- tp53.wtup.top[order(rowSums(tp53.wtup.top), decreasing = T), ]
@@ -131,7 +131,7 @@ for (kkk in 1:length(TCGA.ALL)) {
 }
 
 total.deg$Cohort <- factor(as.character(total.deg$Cohort), levels = TCGA.ALL)
-saveRDS(total.deg, "03.tcga/degs_tp53_mutup_top.rds")
+saveRDS(total.deg, "02.tcga/degs_tp53_mutup_top.rds")
 
 
 ```
@@ -140,7 +140,7 @@ saveRDS(total.deg, "03.tcga/degs_tp53_mutup_top.rds")
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-total.deg.mutup <- readRDS("03.tcga/degs_tp53_misup_top.rds")
+total.deg.mutup <- readRDS("02.tcga/degs_tp53_misup_top.rds")
 
 tp53.mutup.top <- table(total.deg.mutup[, c("Gene","Cohort")])
 tp53.mutup.top <- tp53.mutup.top[order(rowSums(tp53.mutup.top), decreasing = T), ]
@@ -178,7 +178,7 @@ HR of high expression of the 116 p53 targets among 33 TCGA cancer cohorts. In ea
 
 TCGA.ALL <- c("TCGA-OV","TCGA-UCS","TCGA-LUSC","TCGA-ESCA","TCGA-READ","TCGA-HNSC","TCGA-PAAD","TCGA-COAD","TCGA-LUAD","TCGA-BLCA","TCGA-STAD","TCGA-LGG","TCGA-UCEC","TCGA-SARC","TCGA-BRCA","TCGA-GBM","TCGA-LIHC","TCGA-KICH","TCGA-ACC","TCGA-MESO","TCGA-DLBC","TCGA-PRAD","TCGA-CHOL","TCGA-SKCM","TCGA-CESC","TCGA-LAML","TCGA-THYM","TCGA-KIRC","TCGA-KIRP","TCGA-TGCT","TCGA-THCA","TCGA-PCPG","TCGA-UVM")
 
-plot.data <- read.xlsx("03.tcga/TableS1K.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table6.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 1:7]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -223,7 +223,7 @@ HR of high expression of the 157 WT-up genes among 33 TCGA cancer cohorts. In ea
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-plot.data <- read.xlsx("03.tcga/TableS1K.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table6.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 8:14]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -269,7 +269,7 @@ HR of high expression of the 140 MUT-up genes among 33 TCGA cancer cohorts. In e
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-plot.data <- read.xlsx("03.tcga/TableS1K.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table6.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 15:21]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -322,7 +322,7 @@ Heatmap of fold changes of expression of the 116 reported p53 target genes betwe
 
 TCGA.ALL <- c("TCGA-OV","TCGA-UCS","TCGA-LUSC","TCGA-ESCA","TCGA-READ","TCGA-HNSC","TCGA-PAAD","TCGA-COAD","TCGA-LUAD","TCGA-BLCA","TCGA-STAD","TCGA-LGG","TCGA-UCEC","TCGA-SARC","TCGA-BRCA","TCGA-GBM","TCGA-LIHC","TCGA-KICH","TCGA-ACC","TCGA-MESO","TCGA-DLBC","TCGA-PRAD","TCGA-CHOL","TCGA-SKCM","TCGA-CESC","TCGA-LAML","TCGA-THYM","TCGA-KIRC","TCGA-KIRP","TCGA-TGCT","TCGA-THCA","TCGA-PCPG","TCGA-UVM")
 
-plot.data <- read.xlsx("03.tcga/TableS1L.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table7.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 1:6]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -369,7 +369,7 @@ Heatmap of fold changes of expression of the 157 WT-up genes between samples wit
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-plot.data <- read.xlsx("03.tcga/TableS1L.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table7.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 7:12]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -417,7 +417,7 @@ Heatmap of fold changes of expression of the 140 MUT-up genes between samples wi
 
 ``` {r eval = TRUE, fig.width = 7, fig.height = 5, fig.align = 'center'}
 
-plot.data <- read.xlsx("03.tcga/TableS1L.xlsx", sheet = 1, startRow = 2)
+plot.data <- read.xlsx("02.tcga/Table7.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- plot.data[, 13:18]
 plot.data <- plot.data[which(!is.na(plot.data$TCGA.Cohort)), ]
@@ -464,7 +464,7 @@ HR for p53 mutations in 33 TCGA cancer types.
 
 ``` {r eval = TRUE, fig.width = 14, fig.height = 9, fig.align = 'center'}
 
-tcga.meta <- read.xlsx("03.tcga/TableS1J.xlsx", sheet = 1, startRow = 2)
+tcga.meta <- read.xlsx("02.tcga/Table5.xlsx", sheet = 1, startRow = 2)
 
 plot.data <- tcga.meta[, 1:10]
 plot.data <- plot.data[which(plot.data$With.survival.data == 1 & plot.data$Sample.type == "Primary Tumor" & plot.data$MutationReported == "Yes"), ]
@@ -525,7 +525,7 @@ Boxplot of MDM2 gene expression in TCGA Pan-Cancer Atlas. Fragments Per Kilobase
 
 ``` {r eval = TRUE, fig.width = 8, fig.height = 4, fig.align = 'center'}
 
-tcga.meta <- read.xlsx("03.tcga/TableS1N.xlsx", sheet = 1, startRow = 2)
+tcga.meta <- read.xlsx("02.tcga/Table8.xlsx", sheet = 1, startRow = 2)
 
 plot.order <- aggregate(tcga.meta$MDM2.expression, list(Cohort = tcga.meta$TCGA.cohort), median)
 plot.order <- plot.order[order(plot.order$x, decreasing = F), ]
@@ -558,7 +558,7 @@ Radar plots predicting treatment sensitivity of p53 rescue therapy in the indica
 
 ``` {r eval = TRUE, fig.width = 12, fig.height = 18, fig.align = 'center'}
 
-tcga.rank <- read.xlsx("03.tcga/TableS1O.xlsx", sheet = 1, startRow = 2)
+tcga.rank <- read.xlsx("02.tcga/Table9.xlsx", sheet = 1, startRow = 2)
 tcga.rank$CohortSim <- str_replace_all(tcga.rank$Cohort, "TCGA-", "")
 
 idx <- c("Rank.(HR.of.high.expression.of.p53.targets);.data.derived.from.S1K",
