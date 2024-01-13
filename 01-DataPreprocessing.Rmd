@@ -38,7 +38,7 @@ The raw expression of RNA-seq data generated using salmon could be downloaded vi
 
 ## GEO data
 
-The `GEOquery` was used for download of GEO-based expression data.
+The `GEOquery` was used for downloading of GEO-based expression data.
 
 ``` {r eval = FALSE}
 
@@ -114,7 +114,7 @@ exp_mat <- log2(exp_mat)
 
 ```
 
-The raw data of array-based GEO data could be download via https://github.com/NRCTM-bioinfo/p53_compounds.
+The raw data of array-based GEO data could be downloaded via https://github.com/NRCTM-bioinfo/p53_compounds.
 
 ## Source data
 
@@ -139,7 +139,7 @@ exp_mat <- log2(countToFpkm(as.matrix(plot.mat), geneLength) + 1)
 
 ```
 
-The raw data of this dataset could be download via https://github.com/NRCTM-bioinfo/p53_compounds.
+The raw data of this dataset could be downloaded via https://github.com/NRCTM-bioinfo/p53_compounds.
 
 Gene Symbol Converter
 

@@ -1,0 +1,325 @@
+
+# CMAP database
+
+``` {r eval = FALSE, fig.width = 8, fig.height = 5, fig.align = 'center'}
+
+library(cmapR)
+library(ggthemes)
+library(enrichR)
+
+
+
+
+############ read data
+sinfo.data <- read.table("siginfo_beta.txt", sep = "\t", header = T)
+head(sinfo.data, 2)
+table(sinfo.data$pert_type)
+
+gctx.all = parse_gctx("level5_beta_all_n1201944x12328.gctx")
+dim(gctx.all@mat)
+
+
+
+
+############ preprocess data
+sinfo.data.untrt <- sinfo.data[which(sinfo.data$pert_type == "ctl_untrt"), ]
+sinfo.data.untrt <- sinfo.data.untrt[which(sinfo.data.untrt$pert_time >= 0 & sinfo.data.untrt$pert_time <= 120 ), ]
+sinfo.data.untrt <- sinfo.data.untrt[which(sinfo.data.untrt$bead_batch != "b44"), ]
+length(unique(sinfo.data.untrt$cell_iname))
+"JURKAT" %in% sinfo.data.untrt$cell_iname
+
+sinfo.data.cp <- sinfo.data[which(sinfo.data$pert_type == "trt_cp"), ]
+sinfo.data.cp <- sinfo.data.cp[which(sinfo.data.cp$pert_time >= 24 & sinfo.data.cp$pert_time <= 48 ), ]
+sinfo.data.cp <- sinfo.data.cp[which(sinfo.data.cp$pert_dose <= 101 & sinfo.data.cp$pert_dose >= 0.1), ]
+sinfo.data.cp$dose_type <- "0.1-1"
+sinfo.data.cp$dose_type[which(sinfo.data.cp$pert_dose >= 1 & sinfo.data.cp$pert_dose < 10)] <- "1-10"
+sinfo.data.cp$dose_type[which(sinfo.data.cp$pert_dose >= 10 & sinfo.data.cp$pert_dose < 101)] <- "10-100"
+table(sinfo.data.cp$dose_type)
+sinfo.data.cp <- sinfo.data.cp[which(sinfo.data.cp$bead_batch != "b44"), ]
+"JURKAT" %in% sinfo.data.cp$cell_iname
+
+
+dim(sinfo.data.untrt)
+dim(sinfo.data.cp)
+
+cell.common <- unique(sinfo.data.untrt$cell_iname)
+cell.common <- cell.common[cell.common %in% sinfo.data.cp$cell_iname] 
+
+
+sinfo.data.untrt <- sinfo.data.untrt[sinfo.data.untrt$cell_iname %in% cell.common, ]
+sinfo.data.cp <- sinfo.data.cp[sinfo.data.cp$cell_iname %in% cell.common, ]
+
+comp.info <- comp.info.raw
+sub <- table(sinfo.data.cp$cmap_name)
+comp.info$Freq <- sub[match(comp.info$cmap_name, names(sub))]
+comp.info <- comp.info[which(comp.info$Freq > 1), ]
+comp.info <- comp.info[order(comp.info$Freq, decreasing = T), ]
+
+sinfo.data.cp <- sinfo.data.cp[sinfo.data.cp$cmap_name %in% comp.info$cmap_name, ]
+cell.common <- cell.common[cell.common %in% sinfo.data.cp$cell_iname]
+cell.common <- cell.common[order(cell.common)]
+sinfo.data.untrt <- sinfo.data.untrt[sinfo.data.untrt$cell_iname %in% cell.common, ]
+
+comp.info$Freq <- sub[match(comp.info$cmap_name, names(sub))]
+
+
+sinfo.data.untrt$DrugName <- paste0(sinfo.data.untrt$cell_iname, "|", sinfo.data.untrt$cmap_name)
+sinfo.data.cp$DrugName <- paste0(sinfo.data.cp$cell_iname, "|", sinfo.data.cp$cmap_name, "|", 
+                                   sinfo.data.cp$dose_type,"uM|", sinfo.data.cp$pert_time, "h")
+sinfo.data.cp$Group <- paste0(sinfo.data.cp$dose_type,"uM|", sinfo.data.cp$pert_time, "h")
+sinfo.data.cp$ControlName <- paste0(sinfo.data.cp$cell_iname, "|UnTrt")
+
+
+sinfo.data.cp$ControlName[!sinfo.data.cp$ControlName %in% sinfo.data.untrt$DrugName]
+
+length(sinfo.data.cp$DrugName)
+length(unique(sinfo.data.cp$DrugName))
+
+
+dim(comp.info)
+sinfo.data.cp$cmap_name <- factor(as.character(sinfo.data.cp$cmap_name), levels = comp.info$cmap_name)
+sinfo.data.cp$cell_iname <- factor(as.character(sinfo.data.cp$cell_iname), levels = cell.common)
+sinfo.data.cp <- sinfo.data.cp[order(sinfo.data.cp$Group, sinfo.data.cp$cmap_name, sinfo.data.cp$cell_iname), ]
+
+
+
+#################### expression matrix
+expmat.untrt <- gctx.all@mat[, sinfo.data.untrt$sig_id]
+expmat.cp <- gctx.all@mat[, sinfo.data.cp$sig_id]
+
+dim(expmat.untrt)
+dim(expmat.cp)
+
+gene.info <- gene.info.raw
+gene.info <- gene.info[match(unique(gene.info$gene_symbol), gene.info$gene_symbol), ]
+gene.info <- gene.info[gene.info$gene_symbol %in% p53.gene$GeneSymbol, ]
+gene.info$Index <- rownames(p53.gene)[match(gene.info$gene_symbol, p53.gene$GeneSymbol)]
+gene.info$Index <- as.numeric(gene.info$Index)
+gene.info$GeneType <- p53.gene$GeneType[match(gene.info$gene_symbol, p53.gene$GeneSymbol)]
+gene.info <- gene.info[order(gene.info$Index), ]
+
+expmat.untrt <- expmat.untrt[match(gene.info$gene_id, rownames(expmat.untrt)), ]
+expmat.cp <- expmat.cp[match(gene.info$gene_id, rownames(expmat.cp)), ]
+rownames(expmat.untrt) <- gene.info$gene_symbol[match(rownames(expmat.untrt), gene.info$gene_id)]
+rownames(expmat.cp) <- gene.info$gene_symbol[match(rownames(expmat.cp), gene.info$gene_id)]
+
+write.xlsx(gene.info, "analysis/gene.info.xlsx", overwrite = T)
+
+
+
+
+#################### Stat matrix
+stat.info <- table(sinfo.data.cp[, c("cmap_name","cell_iname")])
+stat.info[stat.info > 0] <- 1
+
+write.xlsx(list(comp.info = comp.info, stat.info = stat.info), "analysis/2.stat.cell_line.compound.xlsx", overwrite = T)
+
+cell.info <- cell.info.raw[match(cell.common, cell.info.raw$cell_iname), ]
+write.xlsx(cell.info, "analysis/2.stat.cell_line.xlsx", overwrite = T)
+
+
+
+saveRDS(sinfo.data.cp, "analysis/sinfo.data.cp.rds")
+saveRDS(sinfo.data.untrt, "analysis/sinfo.data.untrt.rds")
+saveRDS(expmat.untrt, "analysis/expmat.untrt.rds")
+saveRDS(expmat.cp, "analysis/expmat.cp.rds")
+saveRDS(gene.info, "analysis/gene.info.rds")
+
+
+
+
+
+############## boxplot
+cmap.db <- "/Users/daiyuting/Documents/projects/tcga/cmap/analysis/cell"
+cmap.meta <- read.xlsx(paste0(cmap.db, "/1.JURKAT.cmap.meta.xlsx"), sheet = 1, rowNames = T)
+cmap.exp <- read.xlsx(paste0(cmap.db, "/1.JURKAT.cmap.meta.xlsx"), sheet = 2, rowNames = T)
+
+cmap.gene.info <- read.xlsx("/Users/daiyuting/Documents/projects/tcga/cmap/analysis/gene.info.xlsx")
+cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$feature_space == 'landmark'), ]
+cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$gene_symbol %in% rownames(cmap.exp)), ]
+
+cmap.exp <- cmap.exp[match(cmap.gene.info$gene_symbol, rownames(cmap.exp)), ]
+
+
+dim(cmap.meta)
+dim(cmap.exp)
+
+sum(cmap.meta$sig_id != colnames(cmap.exp))
+
+
+drug.name <- c("MG-132","nutlin-3","cytarabine","paclitaxel","decitabine","gemcitabine","etoposide","AMG-232","metformin","azacitidine","docetaxel")
+
+
+
+
+
+
+
+
+cmap.exp.nor <- cmap.exp/2
+
+
+
+
+cmap.meta$CDKN1A <- cmap.exp.nor[ which(rownames(cmap.exp.nor) == "CDKN1A"), cmap.meta$sig_id ] %>% as.numeric()
+cmap.meta$BAX <- cmap.exp.nor[ which(rownames(cmap.exp.nor) == "BAX"), cmap.meta$sig_id ] %>% as.numeric()
+
+plot.data <- cmap.meta
+plot.data$CDKN1A_fc <- 2 ** ( (plot.data$CDKN1A - plot.data$CDKN1A[1]) )
+plot.data$BAX_fc <- 2 ** ( (plot.data$BAX - plot.data$BAX[1]) )
+range(plot.data$CDKN1A_fc)
+range(plot.data$BAX_fc)
+
+
+
+
+drug.name.sel <- c("UnTrt","MG-132","nutlin-3","cytarabine","paclitaxel","decitabine","gemcitabine","etoposide","AMG-232","metformin","azacitidine","docetaxel")
+plot.data.sub <- plot.data[plot.data$cmap_name %in% drug.name.sel, ]
+plot.data.sub$cmap_name <- factor(as.character(plot.data.sub$cmap_name), levels = drug.name.sel)
+plot.data.sub <- plot.data.sub[plot.data.sub$pert_idose %in% c("","3.33 uM","10 uM","20 uM"), ]
+plot.data.sub$dose_type <- "Low"
+plot.data.sub$dose_type[which(plot.data.sub$pert_idose %in% c("10 uM","20 uM"))] <- "High"
+plot.data.sub$dose_type <- factor(as.character(plot.data.sub$dose_type), levels = c("Low","High"))
+
+aggregate(plot.data.sub[, c("CDKN1A_fc","BAX_fc")], list(Dose = plot.data.sub$dose_type, Drug = plot.data.sub$cmap_name), mean)
+
+
+drug.sel <- c("MG-132","nutlin-3","decitabine","gemcitabine","etoposide","AMG-232","metformin","azacitidine")
+sub <- plot.data.sub[plot.data.sub$cmap_name %in% drug.sel, ]
+sub$cmap_name <- factor(as.character(sub$cmap_name), levels = drug.sel)
+plot.sub <- aggregate(sub[, c("CDKN1A_fc","BAX_fc")], list(dose_type = sub$dose_type, cmap_name = sub$cmap_name), mean)
+
+
+out.cmap.meta <- sub
+out.cmap.nor <- cmap.exp.nor[, c("T1D.KD001_JURKAT_120H:TRCN0000000000:-666",sub$sig_id)]
+  
+write.xlsx(list(meta = sub, mat = as.data.frame(round(out.cmap.nor, 2))), "output/9.pcr/1.JURKAT.cmap.meta.xlsx", overwrite = T, rowNames = T)
+
+
+p <- ggbarplot(plot.sub, x = "cmap_name", y = "CDKN1A_fc",
+               fill = "dose_type", color = "black", size = 0.5,
+               palette = c("#AAAAAA","#AAAAAA"), width = 0.5,
+               #add = c("mean_se"), add.param = list(width = 0.25, size = 0.5, color = "black"),
+               main = "CDKN1A_fc",
+               position = position_dodge(0.6),
+               ylab = "CDKN1A_fc", xlab = "") + theme_base()
+p <- p + scale_y_continuous(expand = c(0, 0), limits = c(0, 15))
+p <- p + geom_hline(yintercept = 1, linetype="dashed", color = "#222222")
+p <- p + theme(axis.text.x=element_text( angle = 90, vjust = 0.5, hjust = 1, size = 16 ))
+ggsave(paste0("output/9.pcr/1.jurkat.bar.CDKN1A.cmap.pdf"), p, width = 9, height = 6)
+
+p <- ggbarplot(plot.sub, x = "cmap_name", y = "BAX_fc",
+               fill = "dose_type", color = "black", size = 0.5,
+               palette = c("#AAAAAA","#AAAAAA"), width = 0.5,
+               #add = c("mean_se"), add.param = list(width = 0.25, size = 0.5, color = "black"),
+               main = "BAX_fc",
+               position = position_dodge(0.6),
+               ylab = "BAX_fc", xlab = "") + theme_base()
+p <- p + scale_y_continuous(expand = c(0, 0), limits = c(0, 40))
+p <- p + geom_hline(yintercept = 1, linetype="dashed", color = "#222222")
+p <- p + theme(axis.text.x=element_text( angle = 90, vjust = 0.5, hjust = 1, size = 16 ))
+ggsave(paste0("output/9.pcr/1.jurkat.bar.BAX.cmap.pdf"), p, width = 9, height = 6)
+
+
+
+
+
+
+########################################################################################################
+##### PC3
+cmap.db <- "/Users/daiyuting/Documents/projects/tcga/cmap/analysis/cell"
+cmap.meta <- read.xlsx(paste0(cmap.db, "/2.PC3.cmap.meta.xlsx"), sheet = 1, rowNames = T)
+cmap.exp <- read.xlsx(paste0(cmap.db, "/2.PC3.cmap.meta.xlsx"), sheet = 2, rowNames = T)
+
+cmap.gene.info <- read.xlsx("/Users/daiyuting/Documents/projects/tcga/cmap/analysis/gene.info.xlsx")
+cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$feature_space == 'landmark'), ]
+cmap.gene.info <- cmap.gene.info[which(cmap.gene.info$gene_symbol %in% rownames(cmap.exp)), ]
+
+cmap.exp <- cmap.exp[match(cmap.gene.info$gene_symbol, rownames(cmap.exp)), ]
+
+
+dim(cmap.meta)
+dim(cmap.exp)
+
+sum(cmap.meta$sig_id != colnames(cmap.exp))
+
+
+
+
+cmap.exp.nor <- cmap.exp/2
+
+cmap.meta$CDKN1A <- cmap.exp.nor[ which(rownames(cmap.exp.nor) == "CDKN1A"), cmap.meta$sig_id ] %>% as.numeric()
+cmap.meta$BAX <- cmap.exp.nor[ which(rownames(cmap.exp.nor) == "BAX"), cmap.meta$sig_id ] %>% as.numeric()
+
+plot.data <- cmap.meta
+plot.data$CDKN1A_fc <- 2 ** ( (plot.data$CDKN1A - plot.data$CDKN1A[1]) )
+plot.data$BAX_fc <- 2 ** ( (plot.data$BAX - plot.data$BAX[1]) )
+range(plot.data$CDKN1A_fc)
+range(plot.data$BAX_fc)
+
+
+
+
+drug.name.sel <- c("UnTrt","MG-132","nutlin-3","cytarabine","paclitaxel","decitabine","gemcitabine","etoposide","AMG-232","metformin","azacitidine","docetaxel")
+plot.data.sub <- plot.data[plot.data$cmap_name %in% drug.name.sel, ]
+plot.data.sub$cmap_name <- factor(as.character(plot.data.sub$cmap_name), levels = drug.name.sel)
+plot.data.sub <- plot.data.sub[plot.data.sub$pert_idose %in% c("","3.33 uM","10 uM","20 uM"), ]
+plot.data.sub$dose_type <- "Low"
+plot.data.sub$dose_type[which(plot.data.sub$pert_idose %in% c("10 uM","20 uM"))] <- "High"
+plot.data.sub$dose_type[which(plot.data.sub$pert_idose %in% c("10 uM") & plot.data$cmap_name == "MG-132")] <- "Low"
+plot.data.sub$dose_type <- factor(as.character(plot.data.sub$dose_type), levels = c("Low","High"))
+
+aggregate(plot.data.sub[, c("CDKN1A_fc","BAX_fc")], list(Dose = plot.data.sub$dose_type, Drug = plot.data.sub$cmap_name), mean)
+
+
+drug.sel <- c("MG-132","nutlin-3","decitabine","gemcitabine","etoposide","AMG-232","metformin","azacitidine")
+sub <- plot.data.sub[plot.data.sub$cmap_name %in% drug.sel, ]
+sub$cmap_name <- factor(as.character(sub$cmap_name), levels = drug.sel)
+plot.sub <- aggregate(sub[, c("CDKN1A_fc","BAX_fc")], list(dose_type = sub$dose_type, cmap_name = sub$cmap_name), mean)
+
+
+out.cmap.meta <- sub
+out.cmap.nor <- cmap.exp.nor[, c("CRCGN004_PC3_6H:CMAP-000:-666",sub$sig_id)]
+
+write.xlsx(list(meta = sub, mat = as.data.frame(round(out.cmap.nor, 2))), "output/9.pcr/2.PC3.cmap.meta.xlsx", overwrite = T, rowNames = T)
+
+
+
+p <- ggbarplot(plot.sub, x = "cmap_name", y = "CDKN1A_fc",
+               fill = "dose_type", color = "black", size = 0.5,
+               palette = c("#AAAAAA","#AAAAAA"), width = 0.5,
+               #add = c("mean_se"), add.param = list(width = 0.25, size = 0.5, color = "black"),
+               main = "CDKN1A_fc",
+               position = position_dodge(0.6),
+               ylab = "CDKN1A_fc", xlab = "") + theme_base()
+p <- p + scale_y_continuous(expand = c(0, 0), limits = c(0, 50))
+p <- p + geom_hline(yintercept = 1, linetype="dashed", color = "#222222")
+p <- p + theme(axis.text.x=element_text( angle = 90, vjust = 0.5, hjust = 1, size = 16 ))
+ggsave(paste0("output/9.pcr/2.pc3.bar.CDKN1A.cmap.pdf"), p, width = 9, height = 6)
+
+
+p <- ggbarplot(plot.sub, x = "cmap_name", y = "BAX_fc",
+               fill = "dose_type", color = "black", size = 0.5,
+               palette = c("#AAAAAA","#AAAAAA"), width = 0.5,
+               #add = c("mean_se"), add.param = list(width = 0.25, size = 0.5, color = "black"),
+               main = "BAX_fc",
+               position = position_dodge(0.6),
+               ylab = "BAX_fc", xlab = "") + theme_base()
+p <- p + scale_y_continuous(expand = c(0, 0), limits = c(0, 8))
+p <- p + geom_hline(yintercept = 1, linetype="dashed", color = "#222222")
+p <- p + theme(axis.text.x=element_text( angle = 90, vjust = 0.5, hjust = 1, size = 16 ))
+ggsave(paste0("output/9.pcr/2.pc3.bar.BAX.cmap.pdf"), p, width = 9, height = 6)
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
